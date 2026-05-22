@@ -9,17 +9,17 @@
 
 @font-face {
     font-family: 'Avenir Book';
-    src: url('../fonts/Avenir-Book.ttf');
+    src: url('../fonts/NanumGothicBold.ttf');
 }
 
 @font-face {
     font-family: 'Avenir Medium';
-    src: url('../fonts/Avenir-Medium.ttf');
+    src: url('../fonts/NanumGothicBold.ttf');
 }
 
 @font-face {
     font-family: 'Ringbearer';
-    src: url('../fonts/Ringbearer.ttf');
+    src: url('../fonts/NanumGothicBold.ttf');
 }
 
 /*******************************************************************************
@@ -46,10 +46,10 @@ body, button {
     color: white;
 }
 
-/*body {
+body {
     background: url('./../images/backgrounds/0.jpg') no-repeat center center fixed;
     background-size: cover;
-}*/
+}
 
 /*******************************************************************************
  *                                                                             *

@@ -1,5 +1,5 @@
 # Microsoft Authentication
-
+1ce6e35a-126f-48fd-97fb-54d143ac6d45
 Authenticating with Microsoft is fully supported by Helios Launcher.
 
 ## Acquiring an Entra Client ID

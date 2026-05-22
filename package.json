@@ -1,27 +1,75 @@
 {
-  "name": "helioslauncher",
-  "version": "2.2.1",
-  "productName": "Helios Launcher",
-  "description": "Modded Minecraft Launcher",
-  "author": "Daniel Scalzi (https://github.com/dscalzi/)",
+  "name": "CrownMCRPG2",
+  "version": "1.0.0",
+  "productName": "CrownMCRPG2",
+  "description": "CrownMCRPG2 전용 Minecraft 런처",
+  "author": "jjoRy",
   "license": "UNLICENSED",
-  "homepage": "https://github.com/dscalzi/HeliosLauncher",
+  "homepage": "https://github.com/jojoRy/CrownMCRPG",
   "bugs": {
-    "url": "https://github.com/dscalzi/HeliosLauncher/issues"
+    "url": "https://github.com/jojoRy/CrownMCRPG/issues"
   },
   "private": true,
   "main": "index.js",
+
+  "build": {
+    "appId": "com.crownmcrpg.launcher",
+    "productName": "CrownMCRPG2",
+
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+
+    "files": [
+      "**/*",
+      "!{.gitignore,.vscode,docs,dev-app-update.yml,.eslintrc.json,.nvmrc}"
+    ],
+
+    "extraResources": [
+      "libraries"
+    ],
+
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true
+    },
+
+    "mac": {
+      "target": []
+    },
+
+    "linux": {
+      "target": []
+    },
+
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "jojoRy",
+        "repo": "CrownMCRPG"
+      }
+    ]
+  },
+
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder build",
-    "dist:win": "npm run dist -- -w",
-    "dist:mac": "npm run dist -- -m",
-    "dist:linux": "npm run dist -- -l",
+    "dist:win": "electron-builder build -w",
     "lint": "eslint --config .eslintrc.json ."
   },
+
   "engines": {
     "node": "20.x.x"
   },
+
   "dependencies": {
     "@electron/remote": "^2.1.2",
     "adm-zip": "^0.5.16",
@@ -39,13 +87,15 @@
     "semver": "^7.6.3",
     "toml": "^3.0.0"
   },
+
   "devDependencies": {
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
     "eslint": "^8.57.1"
   },
+
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dscalzi/HeliosLauncher.git"
+    "url": "git+https://github.com/jojoRy/CrownMCRPG.git"
   }
 }

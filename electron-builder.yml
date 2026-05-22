@@ -1,51 +1,52 @@
-appId: 'helioslauncher'
-productName: 'Helios Launcher'
-artifactName: '${productName}-setup-${version}.${ext}'
+appId: "com.crownmcrpg.launcher"
+productName: "CrownMCRPG"
+artifactName: "${productName}-setup-${version}.${ext}"
 
-copyright: 'Copyright © 2018-2024 Daniel Scalzi'
+copyright: "Copyright © 2025 CrownMCRPG"
 
 asar: true
-compression: 'maximum'
+compression: "maximum"
 
 files:
-  - '!{dist,.gitignore,.vscode,docs,dev-app-update.yml,.nvmrc,.eslintrc.json}'
+  - "!{dist,.gitignore,.vscode,docs,dev-app-update.yml,.nvmrc,.eslintrc.json,node_modules/.cache}"
 
 extraResources:
-  - 'libraries'
+  - "libraries"
 
-# Windows Configuration
-win: 
-  target: 
-    - target: 'nsis'
-      arch: 'x64'
+directories:
+  buildResources: "build"
+  output: "dist"
 
-# Windows Installer Configuration
+# =====================================================
+# WINDOWS
+# =====================================================
+win:
+  icon: "build/icon.ico"
+  target:
+    - target: "nsis"
+      arch: "x64"
+  sign: false   # 코드서명 안 쓰므로 false
+
+# NSIS Installer Settings
 nsis:
   oneClick: false
   perMachine: false
   allowElevation: true
   allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "CrownMCRPG"
 
-# macOS Configuration
+# =====================================================
+# macOS (지금은 빌드 OFF)
+# =====================================================
 mac:
-  target:
-    - target: 'dmg'
-      arch:
-        - 'x64'
-        - 'arm64'
-  artifactName: '${productName}-setup-${version}-${arch}.${ext}'
-  category: 'public.app-category.games'
+  target: []          # mac 빌드 비활성화
+  hardenedRuntime: false
+  gatekeeperAssess: false
 
-# Linux Configuration
-linux: 
-  target: 'AppImage'
-  maintainer: 'Daniel Scalzi'
-  vendor: 'Daniel Scalzi'
-  synopsis: 'Modded Minecraft Launcher'
-  description: 'Custom launcher which allows users to join modded servers. All mods, configurations, and updates are handled automatically.'
-  category: 'Game'
-
-
-directories:
-  buildResources: 'build'
-  output: 'dist'
+# =====================================================
+# LINUX (지금은 빌드 OFF)
+# =====================================================
+linux:
+  target: []

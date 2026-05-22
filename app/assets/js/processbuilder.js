@@ -46,6 +46,7 @@ class ProcessBuilder {
      */
     build(){
         fs.ensureDirSync(this.gameDir)
+        this.applyDefaultFilesOnce()
         const tempNativePath = path.join(os.tmpdir(), ConfigManager.getTempNativeFolder(), crypto.pseudoRandomBytes(16).toString('hex'))
         process.throwDeprecation = true
         this.setupLiteLoader()
@@ -116,6 +117,29 @@ class ProcessBuilder {
      * 
      * @returns {string} The classpath separator for the current operating system.
      */
+    applyDefaultFilesOnce(){
+        const defaultsDir = path.join(__dirname, '..', 'defaults')
+
+        const files = [
+            {
+                from: path.join(defaultsDir, 'servers.dat'),
+                to: path.join(this.gameDir, 'servers.dat')
+            },
+            {
+                from: path.join(defaultsDir, 'options.txt'),
+                to: path.join(this.gameDir, 'options.txt')
+            }
+        ]
+
+        for(const file of files){
+            if(fs.existsSync(file.from) && !fs.existsSync(file.to)){
+                fs.ensureDirSync(path.dirname(file.to))
+                fs.copySync(file.from, file.to)
+                logger.info(`Applied default file: ${file.to}`)
+            }
+        }
+    }
+
     static getClasspathSeparator() {
         return process.platform === 'win32' ? ';' : ':'
     }
