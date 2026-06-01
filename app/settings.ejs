@@ -373,6 +373,10 @@
                     </div>
                     <div id="settingsUpdateActionContainer">
                         <button id="settingsUpdateActionButton"><%- lang('settings.checkForUpdates') %></button>
+                        <div id="settingsUpdateProgressContainer" hidden>
+                            <progress id="settingsUpdateProgress" value="0" max="100"></progress>
+                            <div id="settingsUpdateProgressDetails">0%</div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -3,6 +3,7 @@
  */
 // Requirements
 const { URL }                 = require('url')
+const nodePath                = require('path')
 const {
     MojangRestAPI,
     getServerStatus
@@ -29,7 +30,10 @@ const {
 
 // Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
+const LandingDropinModUtil    = require('./assets/js/dropinmodutil')
 const ProcessBuilder          = require('./assets/js/processbuilder')
+
+const DEFAULT_SHADERPACK = 'ComplementaryUnbound_r5.6.1.zip'
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -532,6 +536,11 @@ async function dlAsync(login = true) {
         loggerLaunchSuite.info('No invalid files, skipping download.')
     }
 
+    const instanceDir = nodePath.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id)
+    if(LandingDropinModUtil.setDefaultShaderpack(instanceDir, DEFAULT_SHADERPACK)){
+        loggerLaunchSuite.info(`Default shaderpack applied: ${DEFAULT_SHADERPACK}`)
+    }
+
     // Remove download bar.
     remote.getCurrentWindow().setProgressBar(-1)
 
@@ -648,6 +657,7 @@ const newsArticleAuthor             = document.getElementById('newsArticleAuthor
 const newsArticleComments           = document.getElementById('newsArticleComments')
 const newsNavigationStatus          = document.getElementById('newsNavigationStatus')
 const newsArticleContentScrollable  = document.getElementById('newsArticleContentScrollable')
+const newsUIEnabled                 = document.getElementById('newsButton') != null && document.getElementById('newsContainer') != null
 const nELoadSpan                    = document.getElementById('nELoadSpan')
 
 // News slide caches.
@@ -704,23 +714,25 @@ function slide_(up){
 }
 
 // Bind news button.
-document.getElementById('newsButton').onclick = () => {
+if(newsUIEnabled){
+    document.getElementById('newsButton').onclick = () => {
     // Toggle tabbing.
-    if(newsActive){
-        $('#landingContainer *').removeAttr('tabindex')
-        $('#newsContainer *').attr('tabindex', '-1')
-    } else {
-        $('#landingContainer *').attr('tabindex', '-1')
-        $('#newsContainer, #newsContainer *, #lower, #lower #center *').removeAttr('tabindex')
-        if(newsAlertShown){
-            $('#newsButtonAlert').fadeOut(2000)
-            newsAlertShown = false
-            ConfigManager.setNewsCacheDismissed(true)
-            ConfigManager.save()
+        if(newsActive){
+            $('#landingContainer *').removeAttr('tabindex')
+            $('#newsContainer *').attr('tabindex', '-1')
+        } else {
+            $('#landingContainer *').attr('tabindex', '-1')
+            $('#newsContainer, #newsContainer *, #lower, #lower #center *').removeAttr('tabindex')
+            if(newsAlertShown){
+                $('#newsButtonAlert').fadeOut(2000)
+                newsAlertShown = false
+                ConfigManager.setNewsCacheDismissed(true)
+                ConfigManager.save()
+            }
         }
+        slide_(!newsActive)
+        newsActive = !newsActive
     }
-    slide_(!newsActive)
-    newsActive = !newsActive
 }
 
 // Array to store article meta.
@@ -756,18 +768,20 @@ function setNewsLoading(val){
 }
 
 // Bind retry button.
-newsErrorRetry.onclick = () => {
-    $('#newsErrorFailed').fadeOut(250, () => {
-        initNews()
-        $('#newsErrorLoading').fadeIn(250)
-    })
-}
+if(newsUIEnabled){
+    newsErrorRetry.onclick = () => {
+        $('#newsErrorFailed').fadeOut(250, () => {
+            initNews()
+            $('#newsErrorLoading').fadeIn(250)
+        })
+    }
 
-newsArticleContentScrollable.onscroll = (e) => {
-    if(e.target.scrollTop > Number.parseFloat($('.newsArticleSpacerTop').css('height'))){
-        newsContent.setAttribute('scrolled', '')
-    } else {
-        newsContent.removeAttribute('scrolled')
+    newsArticleContentScrollable.onscroll = (e) => {
+        if(e.target.scrollTop > Number.parseFloat($('.newsArticleSpacerTop').css('height'))){
+            newsContent.setAttribute('scrolled', '')
+        } else {
+            newsContent.removeAttribute('scrolled')
+        }
     }
 }
 
@@ -816,6 +830,9 @@ async function digestMessage(str) {
  * content has finished loading and transitioning.
  */
 async function initNews(){
+    if(!newsUIEnabled){
+        return
+    }
 
     setNewsLoading(true)
 

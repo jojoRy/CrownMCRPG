@@ -210,11 +210,42 @@ exports.setEnabledShaderpack = function(instanceDir, pack){
     let buf
     if(fs.existsSync(optionsShaders)){
         buf = fs.readFileSync(optionsShaders, {encoding: 'utf-8'})
-        buf = buf.replace(SHADER_OPTION, `shaderPack=${pack}`)
+        if(SHADER_OPTION.exec(buf) != null){
+            buf = buf.replace(SHADER_OPTION, `shaderPack=${pack}`)
+        } else {
+            buf += `${buf.endsWith('\n') ? '' : '\n'}shaderPack=${pack}`
+        }
     } else {
         buf = `shaderPack=${pack}`
     }
     fs.writeFileSync(optionsShaders, buf, {encoding: 'utf-8'})
+}
+
+/**
+ * Set a default shaderpack only when the user has not chosen one yet.
+ *
+ * @param {string} instanceDir The path to the server instance directory.
+ * @param {string} pack The shaderpack file name.
+ * @returns {boolean} True if the default shaderpack was applied.
+ */
+exports.setDefaultShaderpack = function(instanceDir, pack){
+    exports.validateDir(instanceDir)
+
+    const shaderpackPath = path.join(instanceDir, SHADER_DIR, pack)
+    const optionsShaders = path.join(instanceDir, SHADER_CONFIG)
+
+    if(!fs.existsSync(shaderpackPath)){
+        return false
+    }
+    if(fs.existsSync(optionsShaders)){
+        const buf = fs.readFileSync(optionsShaders, {encoding: 'utf-8'})
+        if(SHADER_OPTION.exec(buf) != null){
+            return false
+        }
+    }
+
+    exports.setEnabledShaderpack(instanceDir, pack)
+    return true
 }
 
 /**

@@ -1,7 +1,7 @@
 // NOTE FOR THIRD-PARTY
 // REPLACE THIS CLIENT ID WITH YOUR APPLICATION ID.
 // SEE https://github.com/dscalzi/HeliosLauncher/blob/master/docs/MicrosoftAuth.md
-exports.AZURE_CLIENT_ID = '1ce6e35a-126f-48fd-97fb-54d143ac6d45'
+exports.AZURE_CLIENT_ID = 'b1b4994f-1ed9-46c9-ba0e-5ab906300389'
 // SEE NOTE ABOVE.
 
 
@@ -26,3 +26,5 @@ exports.MSFT_ERROR = {
 exports.SHELL_OPCODE = {
     TRASH_ITEM: 'TRASH_ITEM'
 }
+
+exports.USE_EXTERNAL_BROWSER = true

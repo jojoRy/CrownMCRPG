@@ -1,52 +1,28 @@
 appId: "com.crownmcrpg.launcher"
-productName: "CrownMCRPG"
-artifactName: "${productName}-setup-${version}.${ext}"
+productName: "CrownMCRPG2"
 
-copyright: "Copyright © 2025 CrownMCRPG"
-
-asar: true
-compression: "maximum"
+directories:
+  output: "dist"
+  buildResources: "build"
 
 files:
-  - "!{dist,.gitignore,.vscode,docs,dev-app-update.yml,.nvmrc,.eslintrc.json,node_modules/.cache}"
+  - "**/*"
+  - "!{.gitignore,.vscode,docs,dev-app-update.yml,.eslintrc.json,.nvmrc}"
 
 extraResources:
   - "libraries"
 
-directories:
-  buildResources: "build"
-  output: "dist"
-
-# =====================================================
-# WINDOWS
-# =====================================================
 win:
+  target: "nsis"
   icon: "build/icon.ico"
-  target:
-    - target: "nsis"
-      arch: "x64"
-  sign: false   # 코드서명 안 쓰므로 false
 
-# NSIS Installer Settings
 nsis:
   oneClick: false
   perMachine: false
   allowElevation: true
   allowToChangeInstallationDirectory: true
-  createDesktopShortcut: true
-  createStartMenuShortcut: true
-  shortcutName: "CrownMCRPG"
 
-# =====================================================
-# macOS (지금은 빌드 OFF)
-# =====================================================
-mac:
-  target: []          # mac 빌드 비활성화
-  hardenedRuntime: false
-  gatekeeperAssess: false
-
-# =====================================================
-# LINUX (지금은 빌드 OFF)
-# =====================================================
-linux:
-  target: []
+publish:
+  provider: github
+  owner: jojoRy
+  repo: CrownMCRPG

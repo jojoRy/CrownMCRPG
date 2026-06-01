@@ -1498,6 +1498,9 @@ const settingsUpdateChangelogTitle = settingsTabUpdate.getElementsByClassName('s
 const settingsUpdateChangelogText  = settingsTabUpdate.getElementsByClassName('settingsChangelogText')[0]
 const settingsUpdateChangelogCont  = settingsTabUpdate.getElementsByClassName('settingsChangelogContainer')[0]
 const settingsUpdateActionButton   = document.getElementById('settingsUpdateActionButton')
+const settingsUpdateProgressCont   = document.getElementById('settingsUpdateProgressContainer')
+const settingsUpdateProgress       = document.getElementById('settingsUpdateProgress')
+const settingsUpdateProgressDetails = document.getElementById('settingsUpdateProgressDetails')
 
 /**
  * Update the properties of the update action button.
@@ -1514,6 +1517,72 @@ function settingsUpdateButtonStatus(text, disabled = false, handler = null){
     }
 }
 
+function formatUpdateBytes(bytes){
+    if(typeof bytes !== 'number' || !Number.isFinite(bytes) || bytes <= 0){
+        return null
+    }
+
+    const units = ['B', 'KB', 'MB', 'GB']
+    let value = bytes
+    let unitIndex = 0
+
+    while(value >= 1024 && unitIndex < units.length - 1){
+        value /= 1024
+        unitIndex++
+    }
+
+    return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
+}
+
+window.updateSettingsUpdateProgress = function(info, complete = false){
+    if(info == null){
+        settingsUpdateProgressCont.hidden = true
+        settingsUpdateProgress.value = 0
+        settingsUpdateProgressDetails.textContent = '0%'
+        settingsUpdateProgress.hidden = false
+        return
+    }
+
+    const percent = Math.max(0, Math.min(100, Number(info.percent) || (complete ? 100 : 0)))
+    const transferred = formatUpdateBytes(info.transferred)
+    const total = formatUpdateBytes(info.total)
+    const speed = formatUpdateBytes(info.bytesPerSecond)
+    const percentText = `${percent.toFixed(1)}%`
+    let details = percentText
+
+    if(transferred != null && total != null){
+        details = `${percentText} - ${transferred} / ${total}`
+    }
+    if(speed != null && !complete){
+        details += ` (${speed}/s)`
+    }
+
+    settingsUpdateProgressCont.hidden = false
+    settingsUpdateProgress.hidden = false
+    settingsUpdateProgress.value = percent
+    settingsUpdateProgressDetails.textContent = details
+    settingsUpdateButtonStatus(`${Lang.queryJS('settings.updates.downloadingButton')} ${percentText}`, true)
+}
+
+window.showSettingsUpdateError = function(error){
+    const detail = error == null
+        ? Lang.queryJS('settings.updates.updateErrorUnknown')
+        : error.code || error.message || error.toString()
+
+    settingsUpdateTitle.innerHTML = Lang.queryJS('settings.updates.updateCheckFailedTitle')
+    settingsUpdateChangelogCont.style.display = 'none'
+    settingsUpdateProgressCont.hidden = false
+    settingsUpdateProgress.hidden = true
+    settingsUpdateProgressDetails.textContent = `${Lang.queryJS('settings.updates.updateErrorDetail')} ${detail}`
+    settingsUpdateButtonStatus(Lang.queryJS('settings.updates.retryUpdateButton'), false, () => {
+        if(!isDev){
+            window.updateSettingsUpdateProgress(null)
+            ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
+            settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkingForUpdatesButton'), true)
+        }
+    })
+}
+
 /**
  * Populate the update tab with relevant information.
  * 
@@ -1527,17 +1596,15 @@ function populateSettingsUpdateInformation(data){
         settingsUpdateChangelogText.innerHTML = data.releaseNotes
         populateVersionInformation(data.version, settingsUpdateVersionValue, settingsUpdateVersionTitle, settingsUpdateVersionCheck)
         
-        if(process.platform === 'darwin'){
-            settingsUpdateButtonStatus(Lang.queryJS('settings.updates.downloadButton'), false, () => {
-                shell.openExternal(data.darwindownload)
-            })
-        } else {
-            settingsUpdateButtonStatus(Lang.queryJS('settings.updates.downloadingButton'), true)
-        }
+        settingsUpdateButtonStatus(Lang.queryJS('settings.updates.downloadingButton'), true)
+        window.updateSettingsUpdateProgress({
+            percent: 0
+        })
     } else {
         settingsUpdateTitle.innerHTML = Lang.queryJS('settings.updates.latestVersionTitle')
         settingsUpdateChangelogCont.style.display = 'none'
         populateVersionInformation(remote.app.getVersion(), settingsUpdateVersionValue, settingsUpdateVersionTitle, settingsUpdateVersionCheck)
+        window.updateSettingsUpdateProgress(null)
         settingsUpdateButtonStatus(Lang.queryJS('settings.updates.checkForUpdatesButton'), false, () => {
             if(!isDev){
                 ipcRenderer.send('autoUpdateAction', 'checkForUpdate')

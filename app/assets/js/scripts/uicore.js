@@ -43,20 +43,20 @@ if(!isDev){
         switch(arg){
             case 'checking-for-update':
                 loggerAutoUpdater.info('Checking for update..')
+                if(typeof window.updateSettingsUpdateProgress === 'function'){
+                    window.updateSettingsUpdateProgress(null)
+                }
                 settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkingForUpdateButton'), true)
                 break
             case 'update-available':
                 loggerAutoUpdater.info('New update available', info.version)
-                
-                if(process.platform === 'darwin'){
-                    info.darwindownload = `https://github.com/dscalzi/HeliosLauncher/releases/download/v${info.version}/Helios-Launcher-setup-${info.version}${process.arch === 'arm64' ? '-arm64' : '-x64'}.dmg`
-                    showUpdateUI(info)
-                }
-                
                 populateSettingsUpdateInformation(info)
                 break
             case 'update-downloaded':
                 loggerAutoUpdater.info('Update ' + info.version + ' ready to be installed.')
+                if(typeof window.updateSettingsUpdateProgress === 'function'){
+                    window.updateSettingsUpdateProgress(info, true)
+                }
                 settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
                     if(!isDev){
                         ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
@@ -64,9 +64,18 @@ if(!isDev){
                 })
                 showUpdateUI(info)
                 break
+            case 'download-progress':
+                loggerAutoUpdater.info(`Downloading update ${Number(info.percent).toFixed(1)}%`)
+                if(typeof window.updateSettingsUpdateProgress === 'function'){
+                    window.updateSettingsUpdateProgress(info)
+                }
+                break
             case 'update-not-available':
                 loggerAutoUpdater.info('No new update found.')
                 settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkForUpdatesButton'))
+                if(typeof window.updateSettingsUpdateProgress === 'function'){
+                    window.updateSettingsUpdateProgress(null)
+                }
                 break
             case 'ready':
                 updateCheckListener = setInterval(() => {
@@ -84,6 +93,11 @@ if(!isDev){
                         loggerAutoUpdater.error('Error during update check..', info)
                         loggerAutoUpdater.debug('Error Code:', info.code)
                     }
+                } else {
+                    loggerAutoUpdater.error('Error during update check..', info)
+                }
+                if(typeof window.showSettingsUpdateError === 'function'){
+                    window.showSettingsUpdateError(info)
                 }
                 break
             default:
