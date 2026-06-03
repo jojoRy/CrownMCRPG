@@ -1,5 +1,6 @@
 appId: "com.crownmcrpg.launcher"
 productName: "CrownMCRPG2"
+artifactName: "${productName}-Setup-${version}.${ext}"
 
 directories:
   output: "dist"

@@ -1,6 +1,6 @@
 {
   "name": "CrownMCRPG2",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "productName": "CrownMCRPG2",
   "description": "CrownMCRPG2 전용 Minecraft 런처",
   "author": "jjoRy",
@@ -14,6 +14,7 @@
   "build": {
     "appId": "com.crownmcrpg.launcher",
     "productName": "CrownMCRPG2",
+    "artifactName": "${productName}-Setup-${version}.${ext}",
     "directories": {
       "output": "dist",
       "buildResources": "build"

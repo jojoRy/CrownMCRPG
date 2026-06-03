@@ -51,6 +51,71 @@ function microsoftErrorDisplayable(errorCode) {
     }
 }
 
+function parseMicrosoftErrorBody(error) {
+    const body = error?.response?.body
+    if(body == null) {
+        return null
+    }
+    if(typeof body === 'object') {
+        return body
+    }
+    try {
+        return JSON.parse(body)
+    } catch(e) {
+        return { raw: body }
+    }
+}
+
+function microsoftResponseDisplayable(response, step) {
+    if(response?.microsoftErrorCode != null && response.microsoftErrorCode !== MicrosoftErrorCode.UNKNOWN) {
+        return microsoftErrorDisplayable(response.microsoftErrorCode)
+    }
+
+    const error = response?.error
+    const statusCode = error?.response?.statusCode
+    const body = parseMicrosoftErrorBody(error)
+    const bodyCode = body?.error || body?.code
+    const bodyDesc = body?.error_description || body?.message || body?.raw
+    const requestCode = error?.code
+
+    if(error?.name === 'RequestError' || requestCode === 'ENOTFOUND' || requestCode === 'ECONNREFUSED' || requestCode === 'ETIMEDOUT' || requestCode === 'ECONNRESET') {
+        return {
+            title: '로그인 오류:<br>Microsoft 서비스 연결 실패',
+            desc: `Microsoft/Xbox 인증 서버에 연결할 수 없습니다. 인터넷 연결, DNS, VPN 또는 Microsoft 서비스 상태를 확인해 주세요.<br><br>기본 Minecraft Launcher도 실패한다면 런처 문제가 아니라 Microsoft/Minecraft 서비스 또는 네트워크 문제일 가능성이 높습니다.<br><br>단계: ${step}${requestCode != null ? `<br>오류 코드: ${requestCode}` : ''}`
+        }
+    }
+
+    if(statusCode >= 500) {
+        return {
+            title: '로그인 오류:<br>Microsoft 서비스 오류',
+            desc: `Microsoft/Xbox 인증 서버가 정상 응답하지 않았습니다. 잠시 후 다시 시도해 주세요.<br><br>기본 Minecraft Launcher도 실패한다면 런처 문제가 아니라 서비스 장애일 가능성이 높습니다.<br><br>단계: ${step}<br>HTTP 상태: ${statusCode}`
+        }
+    }
+
+    if(bodyCode === 'invalid_client' || bodyCode === 'unauthorized_client') {
+        return {
+            title: '로그인 오류:<br>런처 인증 설정 확인 필요',
+            desc: `Microsoft가 런처의 Azure 앱 인증 설정을 거부했습니다. 클라이언트 ID 또는 Redirect URI 설정을 확인해야 합니다.<br><br>단계: ${step}<br>Microsoft 오류: ${bodyCode}${bodyDesc != null ? `<br>${bodyDesc}` : ''}`
+        }
+    }
+
+    if(bodyCode === 'invalid_grant') {
+        return {
+            title: '로그인 오류:<br>인증 코드 만료',
+            desc: `Microsoft 로그인 인증 코드가 만료되었거나 이미 사용되었습니다. 로그인 창을 닫고 다시 시도해 주세요.<br><br>반복된다면 런처의 Redirect URI 설정 문제일 수 있습니다.<br><br>단계: ${step}<br>Microsoft 오류: ${bodyCode}${bodyDesc != null ? `<br>${bodyDesc}` : ''}`
+        }
+    }
+
+    if(statusCode != null || bodyCode != null || requestCode != null) {
+        return {
+            title: '로그인 오류:<br>Microsoft 인증 실패',
+            desc: `Microsoft 인증 과정에서 오류가 발생했습니다.<br><br>단계: ${step}${statusCode != null ? `<br>HTTP 상태: ${statusCode}` : ''}${bodyCode != null ? `<br>Microsoft 오류: ${bodyCode}` : ''}${requestCode != null ? `<br>오류 코드: ${requestCode}` : ''}${bodyDesc != null ? `<br>${bodyDesc}` : ''}`
+        }
+    }
+
+    return microsoftErrorDisplayable(MicrosoftErrorCode.UNKNOWN)
+}
+
 function mojangErrorDisplayable(errorCode) {
     switch(errorCode) {
         case MojangErrorCode.ERROR_METHOD_NOT_ALLOWED:
@@ -188,7 +253,7 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
         if(authMode !== AUTH_MODE.MC_REFRESH) {
             const accessTokenResponse = await MicrosoftAuth.getAccessToken(entryCode, authMode === AUTH_MODE.MS_REFRESH, AZURE_CLIENT_ID)
             if(accessTokenResponse.responseStatus === RestResponseStatus.ERROR) {
-                return Promise.reject(microsoftErrorDisplayable(accessTokenResponse.microsoftErrorCode))
+                return Promise.reject(microsoftResponseDisplayable(accessTokenResponse, 'Microsoft 토큰 교환'))
             }
             accessToken = accessTokenResponse.data
             accessTokenRaw = accessToken.access_token
@@ -198,19 +263,19 @@ async function fullMicrosoftAuthFlow(entryCode, authMode) {
         
         const xblResponse = await MicrosoftAuth.getXBLToken(accessTokenRaw)
         if(xblResponse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(microsoftErrorDisplayable(xblResponse.microsoftErrorCode))
+            return Promise.reject(microsoftResponseDisplayable(xblResponse, 'Xbox Live 토큰 발급'))
         }
         const xstsResonse = await MicrosoftAuth.getXSTSToken(xblResponse.data)
         if(xstsResonse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(microsoftErrorDisplayable(xstsResonse.microsoftErrorCode))
+            return Promise.reject(microsoftResponseDisplayable(xstsResonse, 'XSTS 인증'))
         }
         const mcTokenResponse = await MicrosoftAuth.getMCAccessToken(xstsResonse.data)
         if(mcTokenResponse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(microsoftErrorDisplayable(mcTokenResponse.microsoftErrorCode))
+            return Promise.reject(microsoftResponseDisplayable(mcTokenResponse, 'Minecraft 토큰 발급'))
         }
         const mcProfileResponse = await MicrosoftAuth.getMCProfile(mcTokenResponse.data.access_token)
         if(mcProfileResponse.responseStatus === RestResponseStatus.ERROR) {
-            return Promise.reject(microsoftErrorDisplayable(mcProfileResponse.microsoftErrorCode))
+            return Promise.reject(microsoftResponseDisplayable(mcProfileResponse, 'Minecraft 프로필 확인'))
         }
         return {
             accessToken,

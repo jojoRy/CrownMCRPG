@@ -38,6 +38,38 @@ webFrame.setVisualZoomLevelLimits(1, 1)
 
 // Initialize auto updates in production environments.
 let updateCheckListener
+let updateInstallTimer
+
+function setLandingUpdateStatus(title, details = '', percent = null) {
+    const container = document.getElementById('landingUpdateStatus')
+    if(container == null) {
+        return
+    }
+
+    const titleElement = document.getElementById('landingUpdateTitle')
+    const progressElement = document.getElementById('landingUpdateProgress')
+    const detailsElement = document.getElementById('landingUpdateDetails')
+
+    container.hidden = false
+    titleElement.textContent = title
+    detailsElement.textContent = details
+
+    if(percent == null) {
+        progressElement.hidden = true
+        progressElement.value = 0
+    } else {
+        progressElement.hidden = false
+        progressElement.value = Math.max(0, Math.min(100, percent))
+    }
+}
+
+function hideLandingUpdateStatus() {
+    const container = document.getElementById('landingUpdateStatus')
+    if(container != null) {
+        container.hidden = true
+    }
+}
+
 if(!isDev){
     ipcRenderer.on('autoUpdateNotification', (event, arg, info) => {
         switch(arg){
@@ -46,10 +78,12 @@ if(!isDev){
                 if(typeof window.updateSettingsUpdateProgress === 'function'){
                     window.updateSettingsUpdateProgress(null)
                 }
+                hideLandingUpdateStatus()
                 settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkingForUpdateButton'), true)
                 break
             case 'update-available':
                 loggerAutoUpdater.info('New update available', info.version)
+                setLandingUpdateStatus('런처 업데이트 다운로드 중', `새 버전 ${info.version} 준비 중`, 0)
                 populateSettingsUpdateInformation(info)
                 break
             case 'update-downloaded':
@@ -57,18 +91,22 @@ if(!isDev){
                 if(typeof window.updateSettingsUpdateProgress === 'function'){
                     window.updateSettingsUpdateProgress(info, true)
                 }
-                settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
+                setLandingUpdateStatus('런처 업데이트 설치 중', '잠시 후 런처가 자동으로 재시작됩니다.', 100)
+                settingsUpdateButtonStatus('업데이트 설치 중...', true)
+                showUpdateUI(info)
+                clearTimeout(updateInstallTimer)
+                updateInstallTimer = setTimeout(() => {
                     if(!isDev){
                         ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
                     }
-                })
-                showUpdateUI(info)
+                }, 3000)
                 break
             case 'download-progress':
                 loggerAutoUpdater.info(`Downloading update ${Number(info.percent).toFixed(1)}%`)
                 if(typeof window.updateSettingsUpdateProgress === 'function'){
                     window.updateSettingsUpdateProgress(info)
                 }
+                setLandingUpdateStatus('런처 업데이트 다운로드 중', `${Number(info.percent).toFixed(1)}% 완료`, Number(info.percent))
                 break
             case 'update-not-available':
                 loggerAutoUpdater.info('No new update found.')
@@ -76,6 +114,7 @@ if(!isDev){
                 if(typeof window.updateSettingsUpdateProgress === 'function'){
                     window.updateSettingsUpdateProgress(null)
                 }
+                hideLandingUpdateStatus()
                 break
             case 'ready':
                 updateCheckListener = setInterval(() => {
@@ -99,6 +138,7 @@ if(!isDev){
                 if(typeof window.showSettingsUpdateError === 'function'){
                     window.showSettingsUpdateError(info)
                 }
+                hideLandingUpdateStatus()
                 break
             default:
                 loggerAutoUpdater.info('Unknown argument', arg)

@@ -128,6 +128,10 @@ class ProcessBuilder {
             {
                 from: path.join(defaultsDir, 'options.txt'),
                 to: path.join(this.gameDir, 'options.txt')
+            },
+            {
+                from: path.join(defaultsDir, 'config', 'iris.properties'),
+                to: path.join(this.gameDir, 'config', 'iris.properties')
             }
         ]
 

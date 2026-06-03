@@ -3,7 +3,6 @@
  */
 // Requirements
 const { URL }                 = require('url')
-const nodePath                = require('path')
 const {
     MojangRestAPI,
     getServerStatus
@@ -30,10 +29,7 @@ const {
 
 // Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
-const LandingDropinModUtil    = require('./assets/js/dropinmodutil')
 const ProcessBuilder          = require('./assets/js/processbuilder')
-
-const DEFAULT_SHADERPACK = 'ComplementaryUnbound_r5.6.1.zip'
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -534,11 +530,6 @@ async function dlAsync(login = true) {
         }
     } else {
         loggerLaunchSuite.info('No invalid files, skipping download.')
-    }
-
-    const instanceDir = nodePath.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id)
-    if(LandingDropinModUtil.setDefaultShaderpack(instanceDir, DEFAULT_SHADERPACK)){
-        loggerLaunchSuite.info(`Default shaderpack applied: ${DEFAULT_SHADERPACK}`)
     }
 
     // Remove download bar.
